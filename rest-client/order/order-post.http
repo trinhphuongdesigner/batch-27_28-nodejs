@@ -1,0 +1,24 @@
+POST http://localhost:9000/orders HTTP/1.1
+content-type: application/json
+
+{ 
+   "shippedDate": "2023-04-01",
+   "paymentType": "CASH",
+   "status": "WAITING",
+   "customerId": "6423e50c8499da0b7a2ebc1b",
+   "employeeId": "6423e5fcb0312f0dfd85cc74",
+   "orderDetails": [
+      {
+         "productId": "6422faee10807c4703b71545",
+         "price": 100,
+         "discount": 10,
+         "quantity": 1
+      },
+      {
+         "productId": "6424229ce4ce5d0af31c466e",
+         "price": 100000,
+         "discount": 10,
+         "quantity": 3
+      }
+   ]
+}

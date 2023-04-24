@@ -4,16 +4,155 @@ const router = express.Router();
 const { Product, Category, Supplier } = require('../models');
 const ObjectId = require('mongodb').ObjectId;
 
+const {
+  validateSchema,
+  getProductsSchema,
+} = require('../validation/product');
+
 // Methods: POST / PATCH / GET / DELETE / PUT
 
 // ------------------------------------------------------------------------------------------------
 // Get all
-router.get('/', async (req, res, next) => {
+router.get('/', validateSchema(getProductsSchema), async (req, res, next) => {
   try {
-    let results = await Product.find().populate('category').populate('supplier').lean({ virtuals: true });
+    const {
+      category,
+      sup,
+      q,
+      skip,
+      limit,
+      productName,
+      stockStart,
+      stockEnd,
+      priceStart,
+      priceEnd,
+      discountStart,
+      discountEnd,
+    } = req.query;
+    const conditionFind = {};
+
+    if (category) conditionFind.categoryId = category;
+    if (sup) conditionFind.supplierId = sup;
+    if (productName) {
+      conditionFind.name = new RegExp(`${productName}`)
+    }
+
+    if (stockStart & stockEnd) {
+      conditionFind.stock = {
+        $expr: {
+          $and: [
+            { stock: { $gte: Number(stockStart) } },
+            { stock: { $lte: Number(stockEnd) } },
+          ]
+        }
+      }
+    } else if (stockStart) {
+      conditionFind.stock = {
+        $expr: {
+          $and: [
+            { stock: { $gte: Number(stockStart) } },
+          ]
+        }
+      }
+    } else if (stockEnd) {
+      conditionFind.stock = {
+        $expr: {
+          $and: [
+            { stock: { $lte: Number(stockEnd) } },
+          ]
+        }
+      }
+    }
+
+    console.log('««««« conditionFind »»»»»', conditionFind);
+
+    let results = await Product
+    .find(conditionFind)
+    .populate('category')
+    .populate('supplier')
+    .skip(skip)
+    .limit(limit)
+    .lean({ virtuals: true });
 
     res.json(results);
   } catch (error) {
+    console.log('««««« error »»»»»', error);
+    res.status(500).json({ ok: false, error });
+  }
+});
+
+router.get('/list', validateSchema(getProductsSchema), async (req, res, next) => {
+  try {
+    const {
+      category,
+      sup,
+      q,
+      skip,
+      productName,
+      stockStart,
+      stockEnd,
+      priceStart,
+      priceEnd,
+      discountStart,
+      discountEnd,
+    } = req.query;
+
+    const conditionFind = {};
+
+    // conditionFind.limit = 2;
+
+    if (category) conditionFind.categoryId = category;
+    if (sup) conditionFind.supplierId = sup;
+    if (productName) {
+      conditionFind.name = new RegExp(`${productName}`)
+    }
+
+    // if (stockStart & stockEnd) {
+    //   conditionFind.stock = {
+    //     $expr: {
+    //       $and: [
+    //         { stock: { $gte: Number(stockStart) } },
+    //         { stock: { $lte: Number(stockEnd) } },
+    //       ]
+    //     }
+    //   }
+    // } else if (stockStart) {
+    //   conditionFind.stock = {
+    //     $expr: {
+    //       $and: [
+    //         { stock: { $gte: Number(stockStart) } },
+    //       ]
+    //     }
+    //   }
+    // } else if (stockEnd) {
+    //   conditionFind.stock = {
+    //     $expr: {
+    //       $and: [
+    //         { stock: { $lte: Number(stockEnd) } },
+    //       ]
+    //     }
+    //   }
+    // }
+
+    console.log('««««« conditionFind »»»»»', conditionFind);
+
+    const results = await Product
+    .find(conditionFind)
+    .populate('category')
+    .populate('supplier')
+    .skip(skip)
+    .limit(2)
+    .lean({ virtuals: true });
+
+    const totalResults = await Product
+    .countDocuments(conditionFind)
+
+    res.json({
+      payload: results,
+      total: totalResults,
+    });
+  } catch (error) {
+    console.log('««««« error »»»»»', error);
     res.status(500).json({ ok: false, error });
   }
 });
@@ -32,6 +171,7 @@ router.get('/:id', async (req, res, next) => {
   validationSchema.validate({ params: req.params }, { abortEarly: false })
   .then(async () => {
     const { id } = req.params;
+    console.log('««««« id »»»»»', id);
 
     let results = await Product.findById(id).populate('category').populate('supplier').lean({ virtuals: true });
 
