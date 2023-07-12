@@ -28,6 +28,8 @@ router.get('/', validateSchema(getProductsSchema), async (req, res, next) => {
       priceEnd,
       discountStart,
       discountEnd,
+      order,
+      sortBy,
     } = req.query;
     const conditionFind = {};
 
@@ -64,6 +66,21 @@ router.get('/', validateSchema(getProductsSchema), async (req, res, next) => {
       }
     }
 
+    const conditionSort = {};
+    // sortBy = tiêu chí sắp xếp
+    // order = chiều sắp xếp
+    // asc => tăng dần, desc => giảm dần
+    // -1 giảm dần, 1 tăng dần
+    if (sortBy) {
+      conditionSort[sortBy] = order === 'asc' || !order ? 1 : -1; // mặc định là tăng dần
+    } else {
+      conditionSort[price] = order === 'asc' || !order ? 1 : -1; // mặc định là giá
+    }
+
+    // conditionSort = {
+    //   price: 1,
+    // };
+
     console.log('««««« conditionFind »»»»»', conditionFind);
 
     let results = await Product
@@ -72,6 +89,7 @@ router.get('/', validateSchema(getProductsSchema), async (req, res, next) => {
     .populate('supplier')
     .skip(skip)
     .limit(limit)
+    .sort(conditionSort)
     .lean({ virtuals: true });
 
     res.json(results);
