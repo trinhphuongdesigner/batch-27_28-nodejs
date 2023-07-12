@@ -21,6 +21,7 @@ const productSchema = Schema(
   },
   {
     versionKey: false,
+    timestamps: true,
   },
 );
 

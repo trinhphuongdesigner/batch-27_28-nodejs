@@ -2,7 +2,7 @@ POST http://localhost:9000/products HTTP/1.1
 content-type: application/json
 
 {
-   "name": "Điện thoại Iphone 15",
+   "name": "Điện thoại Iphone 16",
    "price": 15600000,
    "discount": 15,
    "stock": 15,
